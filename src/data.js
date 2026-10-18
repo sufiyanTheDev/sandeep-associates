@@ -1,0 +1,136 @@
+export const services = [
+  {
+    slug: 'company-law-secretarial',
+    title: 'Company Law & Secretarial Services',
+    short: 'Thoughtful support for statutory, governance and secretarial responsibilities.',
+    desc: 'Practical company law and secretarial guidance to help organisations stay organised, informed and compliant.',
+    points: [
+      'Company and LLP incorporation support',
+      'Secretarial compliance and statutory filings',
+      'Board and shareholder meeting support',
+      'Secretarial audits and governance advisory',
+    ],
+  },
+  {
+    slug: 'mergers-acquisitions',
+    title: 'M&A Transactions Advisory',
+    short: 'Clear guidance through complex transactions and corporate restructuring.',
+    desc: 'Structured support for business combinations and corporate changes, with attention to process and regulatory requirements.',
+    points: [
+      'Mergers and amalgamations',
+      'Demerger and restructuring support',
+      'Acquisitions and joint ventures',
+      'Transaction documentation coordination',
+    ],
+  },
+  {
+    slug: 'valuation',
+    title: 'Valuation Services',
+    short: 'Independent valuation support for informed decisions.',
+    desc: 'Valuation support designed to help stakeholders make decisions with greater clarity and confidence.',
+    points: [
+      'Equity and business valuation',
+      'Valuation for regulatory purposes',
+      'ESOP-related valuation support',
+      'Transaction and reporting requirements',
+    ],
+  },
+  {
+    slug: 'forex-law',
+    title: 'Forex Law Advisory',
+    short: 'Guidance on foreign exchange law and cross-border compliance.',
+    desc: 'Support for businesses navigating foreign exchange rules, investment reporting and related regulatory obligations.',
+    points: [
+      'FEMA advisory and compliance',
+      'Inbound and outbound investment guidance',
+      'Regulatory reporting support',
+      'Approval process guidance',
+    ],
+  },
+  {
+    slug: 'risk-assurance-due-diligence',
+    title: 'Risk, Assurance & Due Diligence',
+    short: 'A closer view of risk, compliance and transaction readiness.',
+    desc: 'Structured reviews to help organisations understand obligations, identify gaps and approach decisions with confidence.',
+    points: [
+      'Corporate and legal due diligence',
+      'Compliance reviews',
+      'Transaction and investment diligence',
+      'Risk identification and reporting',
+    ],
+  },
+  {
+    slug: 'foreign-investment-approvals',
+    title: 'Foreign Investment & Approvals',
+    short: 'Support for investment structures, approvals and ongoing obligations.',
+    desc: 'Guidance for international businesses and investors establishing or expanding operations in India.',
+    points: [
+      'Foreign investment structuring',
+      'Subsidiary and joint venture setup',
+      'Investment approvals and reporting',
+      'Downstream investment compliance',
+    ],
+  },
+  {
+    slug: 'capital-market',
+    title: 'Capital Market Services',
+    short: 'Corporate and regulatory support for capital market matters.',
+    desc: 'A considered starting point for selected capital-market compliance and corporate requirements.',
+    points: [
+      'Corporate compliance support',
+      'Regulatory process guidance',
+      'Documentation coordination',
+      'Governance and disclosure support',
+    ],
+  },
+  {
+    slug: 'india-entry-business-setup',
+    title: 'India Entry & Business Setup',
+    short: 'A clearer path for organisations planning to establish in India.',
+    desc: 'Practical support to help businesses understand entry structures, setup steps and compliance responsibilities.',
+    points: [
+      'India entry route discussions',
+      'Entity setup coordination',
+      'Initial compliance planning',
+      'Ongoing corporate support',
+    ],
+  },
+];
+export const mockArticles = [
+  {
+    category: 'Company Law',
+    date: '12 Oct 2026',
+    title: 'A practical checklist for board meeting readiness',
+    desc: 'Sample overview of documents and process considerations before a board meeting.',
+  },
+  {
+    category: 'FEMA',
+    date: '08 Oct 2026',
+    title: 'Understanding foreign investment reporting steps',
+    desc: 'A mock guide to reporting checkpoints during an investment journey.',
+  },
+  {
+    category: 'Governance',
+    date: '01 Oct 2026',
+    title: 'Building a reliable compliance calendar',
+    desc: 'Ideas for organising recurring obligations, ownership and review.',
+  },
+  {
+    category: 'Valuation',
+    date: '24 Sep 2026',
+    title: 'When a business valuation may be required',
+    desc: 'An introductory overview of situations where independent valuation may help.',
+  },
+  {
+    category: 'M&A',
+    date: '18 Sep 2026',
+    title: 'Early diligence questions for a transaction',
+    desc: 'A mock starter list of areas teams commonly organise during planning.',
+  },
+  {
+    category: 'Resources',
+    date: '11 Sep 2026',
+    title: 'Keeping corporate records organised',
+    desc: 'Simple principles for maintaining and retrieving corporate records.',
+  },
+];
