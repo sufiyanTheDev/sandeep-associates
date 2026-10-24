@@ -575,7 +575,7 @@ select:focus-visible {
   margin: 0;
 }
 .section {
-  padding: 80px 0;
+  padding: 88px 0;
 }
 .pale {
   background: #f8fafb;
@@ -2056,75 +2056,64 @@ td button {
   }
 }
 
-/* Seamless page-intro transition into the content below. */
-.pageintro {
-  isolation: isolate;
-  padding-bottom: 54px;
-}
-.pageintro::after {
-  content: '';
-  position: absolute;
-  z-index: 1;
-  pointer-events: none;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 76px;
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.62) 68%, #fff 100%);
+
+/* Additive scroll reveals — existing hover and page-transition rules are preserved. */
+.motion-reveal {
+  opacity: 0;
+  transform: translate3d(0, 12px, 0);
+  transition: opacity 440ms ease var(--motion-delay, 0ms),
+              transform 440ms cubic-bezier(0.2, 0.65, 0.3, 1) var(--motion-delay, 0ms);
 }
 
-/* Elegant navigation motion: a sliding gold underline and a tiny lift. */
-.nav > a:not(.admin-link) {
-  transform: translateY(0);
-  transition: color 180ms ease, transform 180ms ease;
+.motion-reveal.motion-visible {
+  opacity: 1;
+  transform: none;
 }
-.nav > a:not(.admin-link)::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 3px;
-  height: 2px;
-  background: var(--gold);
-  transform: scaleX(0);
-  transform-origin: left center;
-  transition: transform 220ms cubic-bezier(0.2, 0.7, 0.2, 1);
+
+/* Illustration detail motion */
+.hero-art .orbit {
+  transform-origin: center;
+  animation: sa-orbit-drift 22s ease-in-out infinite alternate;
 }
-.nav > a:not(.admin-link):hover,
-.nav > a:not(.admin-link):focus-visible {
-  transform: translateY(-2px);
+.hero-art .sun {
+  animation: sa-sun-breathe 7s ease-in-out infinite;
 }
-.nav > a:not(.admin-link):hover::after,
-.nav > a:not(.admin-link):focus-visible::after,
-.nav > a:not(.admin-link).active::after {
-  transform: scaleX(1);
+@keyframes sa-orbit-drift {
+  from { transform: translate3d(-2px, 1px, 0); }
+  to { transform: translate3d(2px, -1px, 0); }
 }
-.nav > a:not(.admin-link).active {
-  color: var(--navy);
+@keyframes sa-sun-breathe {
+  0%, 100% { opacity: .78; }
+  50% { opacity: 1; }
 }
-.admin-link {
-  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease, background-color 200ms ease;
+
+/* Mobile navigation visibility transition. Keep existing layout positioning. */
+@media (max-width: 800px) {
+  .nav {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-7px);
+    transition: opacity 200ms ease, transform 200ms ease, visibility 200ms ease;
+  }
+  .nav.open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
 }
-.admin-link:hover {
-  transform: translateY(-2px);
-  border-color: #d8c59f;
-  background: #fffdf8;
-  box-shadow: 0 7px 18px rgba(18, 54, 83, 0.08);
-}
-.header .brand-mark {
-  transition: background-color 220ms ease, box-shadow 220ms ease, transform 220ms ease;
-}
-.header .brand:hover .brand-mark {
-  transform: rotate(-5deg);
-  background: #fffdf8;
-  box-shadow: 0 0 0 4px rgba(198, 161, 91, 0.09);
-}
+
+/* Keep original component transitions; add only reduced-motion overrides for new effects. */
 @media (prefers-reduced-motion: reduce) {
-  .nav > a:not(.admin-link),
-  .nav > a:not(.admin-link)::after,
-  .admin-link,
-  .header .brand-mark {
-    transition: none !important;
+  .motion-reveal,
+  .motion-reveal.motion-visible {
+    opacity: 1 !important;
     transform: none !important;
+    transition: none !important;
+  }
+  .hero-art .orbit,
+  .hero-art .sun {
+    animation: none !important;
   }
 }

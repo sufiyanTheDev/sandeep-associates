@@ -53,10 +53,10 @@ function Header() {
     <header className={`header${scrolled ? ' is-scrolled' : ''}`}>
       <div className="container head">
         <Brand />
-        <button className="menu" onClick={() => setOpen(!open)} aria-label="Toggle navigation">
+        <button className="menu" onClick={() => setOpen((current) => !current)} aria-label={open ? "Close navigation" : "Open navigation"} aria-expanded={open} aria-controls="primary-navigation">
           {open ? <X /> : <Menu />}
         </button>
-        <nav className={open ? 'nav open' : 'nav'}>
+        <nav id="primary-navigation" className={open ? 'nav open' : 'nav'}>
           {[
             ['/', 'Home'],
             ['/about', 'About Us'],
@@ -117,6 +117,73 @@ function Layout() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
+  }, [pathname]);
+
+  // Additive one-time reveals. Existing hover transitions and page-enter animation
+  // are deliberately left intact.
+  useEffect(() => {
+    const selector = [
+      '.herocopy',
+      '.hero-art',
+      '.trustitem',
+      '.service-card',
+      '.about-art',
+      '.about-copy',
+      '.aboutvalue',
+      '.storyart',
+      '.story > div:not(.storyart)',
+      '.stats > div',
+      '.principles article',
+      '.sectionhead',
+      '.detail > div',
+      '.detail > aside',
+      '.articles article',
+      '.opportunities article',
+      '.contactgrid > div',
+      '.form',
+      '.simple',
+      '.metrics > div',
+      '.tablebox',
+      '.adminlogin > section',
+    ].join(',');
+
+    const elements = document.querySelectorAll(selector);
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (reduceMotion || !('IntersectionObserver' in window)) {
+      elements.forEach((element) => element.classList.add('motion-visible'));
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries, activeObserver) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add('motion-visible');
+          activeObserver.unobserve(entry.target);
+        });
+      },
+      { threshold: 0.08, rootMargin: '0px 0px -28px 0px' },
+    );
+
+    elements.forEach((element) => {
+      element.classList.add('motion-reveal');
+      const parent = element.parentElement;
+      const staggerParents = [
+        'services', 'trustgrid', 'principles', 'articles',
+        'opportunities', 'about-values', 'metrics',
+      ];
+      if (parent && staggerParents.some((name) => parent.classList.contains(name))) {
+        const siblings = Array.from(parent.children).filter((child) => child.matches(selector));
+        element.style.setProperty(
+          '--motion-delay',
+          `${Math.min(Math.max(siblings.indexOf(element), 0), 5) * 55}ms`,
+        );
+      }
+      observer.observe(element);
+    });
+
+    return () => observer.disconnect();
   }, [pathname]);
   return (
     <>
