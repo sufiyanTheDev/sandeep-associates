@@ -57,8 +57,18 @@ select:focus-visible {
   height: 88px;
   background: #fff;
   border-bottom: 1px solid #edf0f2;
-  position: relative;
-  z-index: 20;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  transition: box-shadow 240ms ease, background-color 240ms ease, height 240ms ease;
+}
+.header.is-scrolled {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 8px 26px rgba(18, 54, 83, 0.08);
+}
+.header.is-scrolled .head {
+  min-height: 76px;
 }
 .head {
   height: 100%;
@@ -565,7 +575,7 @@ select:focus-visible {
   margin: 0;
 }
 .section {
-  padding: 88px 0;
+  padding: 80px 0;
 }
 .pale {
   background: #f8fafb;
@@ -871,7 +881,7 @@ select:focus-visible {
   position: relative;
   overflow: hidden;
   background: linear-gradient(110deg, #f9f7f2, #f3f7fa 85%);
-  padding: 70px 0 65px;
+  padding: 42px 0 40px;
 }
 .pageintro .container {
   position: relative;
@@ -879,8 +889,9 @@ select:focus-visible {
 }
 .pageintro h1 {
   max-width: 800px;
-  font-size: clamp(39px, 4vw, 54px);
-  margin: 18px 0 13px;
+  font-size: clamp(34px, 3.4vw, 46px);
+  line-height: 1.12;
+  margin: 12px 0 10px;
 }
 .pageintro p {
   max-width: 650px;
@@ -1724,10 +1735,10 @@ td button {
     grid-column: 1/-1;
   }
   .pageintro {
-    padding: 55px 0;
+    padding: 34px 0 32px;
   }
   .pageintro h1 {
-    font-size: clamp(36px, 7vw, 48px);
+    font-size: clamp(32px, 6vw, 42px);
   }
   .story {
     grid-template-columns: 1fr;
@@ -1895,10 +1906,11 @@ td button {
     gap: 8px;
   }
   .pageintro {
-    padding: 44px 0;
+    padding: 28px 0 26px;
   }
   .pageintro h1 {
-    font-size: 36px;
+    font-size: clamp(29px, 8vw, 34px);
+    margin-top: 10px;
   }
   .pageintro p {
     font-size: 12px;
@@ -1989,5 +2001,130 @@ td button {
   }
   .simple h2 {
     font-size: 30px;
+  }
+}
+
+
+/* Premium polish: restrained motion, clear focus, and scroll-aware navigation. */
+.page-transition {
+  animation: page-enter 320ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.nav > a:not(.admin-link),
+.admin-link,
+.textlink,
+.goldlink {
+  transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease;
+}
+.service-card,
+.articles article,
+.principles article,
+.opportunities > *,
+.contactitem,
+.form,
+.detail aside {
+  transition: transform 240ms ease, box-shadow 240ms ease, border-color 240ms ease;
+}
+.service-card:hover,
+.articles article:hover,
+.principles article:hover,
+.opportunities > *:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 34px rgba(18, 54, 83, 0.08);
+}
+.btn {
+  transition: transform 200ms ease, box-shadow 200ms ease, background-color 200ms ease;
+}
+.btn:hover {
+  box-shadow: 0 10px 24px rgba(18, 54, 83, 0.13);
+}
+.header .menu:focus-visible,
+.nav a:focus-visible,
+.btn:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Seamless page-intro transition into the content below. */
+.pageintro {
+  isolation: isolate;
+  padding-bottom: 54px;
+}
+.pageintro::after {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 76px;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.62) 68%, #fff 100%);
+}
+
+/* Elegant navigation motion: a sliding gold underline and a tiny lift. */
+.nav > a:not(.admin-link) {
+  transform: translateY(0);
+  transition: color 180ms ease, transform 180ms ease;
+}
+.nav > a:not(.admin-link)::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 3px;
+  height: 2px;
+  background: var(--gold);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 220ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.nav > a:not(.admin-link):hover,
+.nav > a:not(.admin-link):focus-visible {
+  transform: translateY(-2px);
+}
+.nav > a:not(.admin-link):hover::after,
+.nav > a:not(.admin-link):focus-visible::after,
+.nav > a:not(.admin-link).active::after {
+  transform: scaleX(1);
+}
+.nav > a:not(.admin-link).active {
+  color: var(--navy);
+}
+.admin-link {
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease, background-color 200ms ease;
+}
+.admin-link:hover {
+  transform: translateY(-2px);
+  border-color: #d8c59f;
+  background: #fffdf8;
+  box-shadow: 0 7px 18px rgba(18, 54, 83, 0.08);
+}
+.header .brand-mark {
+  transition: background-color 220ms ease, box-shadow 220ms ease, transform 220ms ease;
+}
+.header .brand:hover .brand-mark {
+  transform: rotate(-5deg);
+  background: #fffdf8;
+  box-shadow: 0 0 0 4px rgba(198, 161, 91, 0.09);
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav > a:not(.admin-link),
+  .nav > a:not(.admin-link)::after,
+  .admin-link,
+  .header .brand-mark {
+    transition: none !important;
+    transform: none !important;
   }
 }

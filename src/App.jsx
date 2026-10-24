@@ -40,8 +40,17 @@ function Brand({ light = false }) {
 }
 function Header() {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const updateScrollState = () => setScrolled(window.scrollY > 12);
+    updateScrollState();
+    window.addEventListener('scroll', updateScrollState, { passive: true });
+    return () => window.removeEventListener('scroll', updateScrollState);
+  }, []);
+
   return (
-    <header className="header">
+    <header className={`header${scrolled ? ' is-scrolled' : ''}`}>
       <div className="container head">
         <Brand />
         <button className="menu" onClick={() => setOpen(!open)} aria-label="Toggle navigation">
@@ -112,7 +121,7 @@ function Layout() {
   return (
     <>
       <Header />
-      <main>
+      <main key={pathname} className="page-transition">
         <Outlet />
       </main>
       <Footer />
