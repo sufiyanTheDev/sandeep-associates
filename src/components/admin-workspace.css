@@ -115,3 +115,10 @@
 @media (max-width: 480px) { .aw-metrics { grid-template-columns: 1fr 1fr; gap: 9px; } .aw-metric-card { padding: 12px; } .aw-metric-value { font-size: 23px; } .aw-metric-note { font-size: 8px; } .aw-date-chip { font-size: 9px; } .aw-detail-header, .aw-detail-body { padding-left: 17px; padding-right: 17px; } .aw-detail-grid { grid-template-columns: 1fr; gap: 14px; } .aw-detail-footer { padding-left: 17px; padding-right: 17px; } .aw-secure-label { font-size: 0; gap: 0; } }
 /* Override the legacy prototype admin shell spacing without changing public-site styles. */
 .adminapp > .aw-main { padding: 0; }
+
+.aw-form-alert { margin: 12px 0; padding: 11px 13px; border: 1px solid #ead2cf; border-radius: 5px; background: #fbf2f1; color: #9a4b43; font-size: 11px; line-height: 1.55; }
+.aw-logout-button { width: 100%; border: 0; background: transparent; text-align: left; cursor: pointer; font: inherit; }
+.aw-logout-button:disabled { opacity: .6; cursor: wait; }
+.aw-loading-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; gap: 12px; color: #6f8190; background: #f8f7f3; font-size: 13px; }
+.aw-loading-spinner { width: 18px; height: 18px; border: 2px solid #e5e8e9; border-top-color: #a27d43; border-radius: 50%; animation: aw-spin .8s linear infinite; }
+@keyframes aw-spin { to { transform: rotate(360deg); } }

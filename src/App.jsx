@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { services, mockArticles } from './data.js';
 import AdminWorkspace from './components/AdminWorkspace.jsx';
+import AdminLoginPage from './components/AdminLoginPage.jsx';
 function Brand({ light = false }) {
   return (
     <Link className={'brand ' + (light ? 'light' : '')} to="/">
@@ -1400,51 +1401,6 @@ function Simple({
     </>
   );
 }
-function AdminLogin() {
-  const [notice, setNotice] = useState(false);
-  return (
-    <main className="adminlogin">
-      <div className="admin-top">
-        <Brand />
-        <Link to="/" className="textlink">
-          ← Back to website
-        </Link>
-      </div>
-      <section>
-        <span className="lockicon">
-          <LockKeyhole size={25} />
-        </span>
-        <Eyebrow>RESTRICTED ACCESS</Eyebrow>
-        <h1>Admin sign in</h1>
-        <p>For authorised administrators to review enquiries and career applications.</p>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            setNotice(true);
-          }}
-        >
-          <label>
-            Admin email
-            <input required type="email" placeholder="admin@yourfirm.com" />
-          </label>
-          <label>
-            Password
-            <input required type="password" placeholder="Enter password" />
-          </label>
-          <button className="btn primary full">
-            Sign in securely <ShieldCheck size={16} />
-          </button>
-        </form>
-        {notice && (
-          <p className="notice">
-            Authentication is not connected yet. This is a UI prototype only.
-          </p>
-        )}
-        <small>Frontend prototype · No credentials are verified.</small>
-      </section>
-    </main>
-  );
-}
 
 function NotFound() {
   return (
@@ -1506,7 +1462,7 @@ export default function App() {
           }
         />
       </Route>
-      <Route path="/admin/login" element={<AdminLogin />} />
+      <Route path="/admin/login" element={<AdminLoginPage />} />
       <Route path="/admin/*" element={<AdminWorkspace />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
