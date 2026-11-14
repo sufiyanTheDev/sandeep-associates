@@ -25,6 +25,7 @@ import {
   X,
 } from 'lucide-react';
 import { services, mockArticles } from './data.js';
+import AdminWorkspace from './components/AdminWorkspace.jsx';
 function Brand({ light = false }) {
   return (
     <Link className={'brand ' + (light ? 'light' : '')} to="/">
@@ -1444,99 +1445,7 @@ function AdminLogin() {
     </main>
   );
 }
-function Admin() {
-  const loc = useLocation(),
-    apps = loc.pathname.includes('applications'),
-    queries = loc.pathname.includes('queries');
-  const rows = apps
-    ? [
-        ['Kavya S.', 'Associate', '17 Oct 2026', 'New'],
-        ['Rahul M.', 'Trainee', '15 Oct 2026', 'In review'],
-      ]
-    : [
-        ['Arun Kumar', 'Company incorporation', '18 Oct 2026', 'New'],
-        ['Priya Raman', 'FEMA advisory', '17 Oct 2026', 'In review'],
-        ['Northstar Ventures', 'Valuation enquiry', '16 Oct 2026', 'New'],
-      ];
-  return (
-    <div className="adminapp">
-      <aside>
-        <Brand light />
-        <small>WORKSPACE</small>
-        <Link to="/admin/dashboard">
-          <MessageSquare size={16} /> Overview
-        </Link>
-        <Link to="/admin/queries">
-          <FileText size={16} /> Queries
-        </Link>
-        <Link to="/admin/applications">
-          <BriefcaseBusiness size={16} /> Applications
-        </Link>
-        <Link className="adminback" to="/">
-          ← Back to website
-        </Link>
-      </aside>
-      <main>
-        <Eyebrow>ADMINISTRATION</Eyebrow>
-        <h1>{apps ? 'Career applications' : queries ? 'Incoming queries' : 'Enquiry overview'}</h1>
-        <p>Illustrative records for reviewing the admin UI. No live submissions are connected.</p>
-        {!apps && !queries && (
-          <div className="metrics">
-            <div>
-              <MessageSquare />
-              <small>Open queries</small>
-              <b>12</b>
-            </div>
-            <div>
-              <BriefcaseBusiness />
-              <small>Applications</small>
-              <b>04</b>
-            </div>
-            <div>
-              <Users />
-              <small>Awaiting review</small>
-              <b>08</b>
-            </div>
-          </div>
-        )}
-        <div className="tablebox">
-          <h2>{apps ? 'Recent applications' : 'Recent enquiries'}</h2>
-          <div className="scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>{apps ? 'Role' : 'Subject'}</th>
-                  <th>Received</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r) => (
-                  <tr key={r[0]}>
-                    {r.map((v, i) => (
-                      <td key={i}>{v}</td>
-                    ))}
-                    <td>
-                      <button onClick={() => alert('Backend detail view will be added later.')}>
-                        View
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <p className="notice">
-          Admin authentication, real records and file storage must be connected to a secure backend
-          before launch.
-        </p>
-      </main>
-    </div>
-  );
-}
+
 function NotFound() {
   return (
     <div className="notfound">
@@ -1598,7 +1507,7 @@ export default function App() {
         />
       </Route>
       <Route path="/admin/login" element={<AdminLogin />} />
-      <Route path="/admin/*" element={<Admin />} />
+      <Route path="/admin/*" element={<AdminWorkspace />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
