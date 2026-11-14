@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import {
   ArrowRight,
@@ -752,50 +752,367 @@ function Knowledge() {
     </>
   );
 }
+
 function ContactForm({ career = false }) {
   const [done, setDone] = useState(false);
-  if (done)
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
+  const submittingRef = useRef(false);
+
+  const apiBaseUrl = (
+    import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
+  ).replace(/\/$/, '');
+
+  // Validate a single field when the user leaves it.
+  const handleFieldBlur = (e) => {
+    const { name, value } = e.target;
+
+    // Only revalidate fields that already have errors.
+    if (!fieldErrors[name]) return;
+
+    const trimmedValue = value.trim();
+    let error = '';
+
+    switch (name) {
+      case 'name':
+        if (!trimmedValue) {
+          error = 'Please enter your full name.';
+        }
+        break;
+
+      case 'email':
+        if (!trimmedValue) {
+          error = 'Please enter your email address.';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedValue)) {
+          error = 'Please enter a valid email address.';
+        }
+        break;
+
+      case 'phone': {
+        const digits = value.replace(/\D/g, '');
+
+        if (!trimmedValue) {
+          error = 'Please enter your mobile number.';
+        } else if (digits.length < 7 || digits.length > 15) {
+          error = 'Enter a valid mobile number (7–15 digits).';
+        }
+        break;
+      }
+
+      case 'subject':
+        if (!trimmedValue) {
+          error = 'Please select an area of enquiry.';
+        }
+        break;
+
+      case 'message':
+        if (!trimmedValue) {
+          error = 'Please enter your message.';
+        }
+        break;
+
+      default:
+        return;
+    }
+
+    setFieldErrors((previous) => {
+      const updated = { ...previous };
+
+      if (error) {
+        updated[name] = error;
+      } else {
+        delete updated[name];
+      }
+
+      return updated;
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (career) {
+      // Career applications will be connected separately.
+      setDone(true);
+      return;
+    }
+
+    if (submittingRef.current) return;
+
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    const payload = {
+      name: String(formData.get('name') || '').trim(),
+      email: String(formData.get('email') || '').trim(),
+      phone: String(formData.get('phone') || '').trim(),
+      subject: String(formData.get('subject') || '').trim(),
+      message: String(formData.get('message') || '').trim(),
+      organization: String(formData.get('organization') || '').trim() || null,
+      designation: String(formData.get('designation') || '').trim() || null,
+      city: String(formData.get('city') || '').trim() || null,
+      professional_updates:
+        formData.get('professional_updates') === 'on',
+    };
+
+    // Complete frontend validation.
+    const errors = {};
+
+    if (!payload.name) {
+      errors.name = 'Please enter your full name.';
+    }
+
+    if (!payload.email) {
+      errors.email = 'Please enter your email address.';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
+      errors.email = 'Please enter a valid email address.';
+    }
+
+    const phoneDigits = payload.phone.replace(/\D/g, '');
+
+    if (!payload.phone) {
+      errors.phone = 'Please enter your mobile number.';
+    } else if (phoneDigits.length < 7 || phoneDigits.length > 15) {
+      errors.phone = 'Enter a valid mobile number (7–15 digits).';
+    }
+
+    if (!payload.subject) {
+      errors.subject = 'Please select an area of enquiry.';
+    }
+
+    if (!payload.message) {
+      errors.message = 'Please enter your message.';
+    }
+
+    setFieldErrors(errors);
+    setSubmitError('');
+
+    if (Object.keys(errors).length > 0) {
+      const firstInvalid = form.querySelector(
+        `[name="${Object.keys(errors)[0]}"]`
+      );
+      firstInvalid?.focus();
+      return;
+    }
+
+    submittingRef.current = true;
+    setIsSubmitting(true);
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(
+      () => controller.abort(),
+      15000
+    );
+
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/api/v1/queries`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify(payload),
+          signal: controller.signal,
+        }
+      );
+
+      const responseBody = await response.json().catch(() => null);
+
+      // Backend validation errors.
+      if (response.status === 422) {
+        const backendErrors = {};
+
+        for (const item of responseBody?.detail || []) {
+          const field = Array.isArray(item.loc)
+            ? item.loc[item.loc.length - 1]
+            : null;
+
+          if (typeof field === 'string' && field !== 'body') {
+            backendErrors[field] = item.msg || 'Please check this value.';
+          }
+        }
+
+        setFieldErrors(backendErrors);
+
+        setSubmitError(
+          Object.keys(backendErrors).length
+            ? 'Please review the highlighted fields and try again.'
+            : 'Some submitted information is invalid. Please review your entries.'
+        );
+
+        return;
+      }
+
+      // Other server errors.
+      if (!response.ok) {
+        throw new Error(
+          response.status >= 500
+            ? 'Our server is temporarily unavailable. Your enquiry has not been confirmed. Please try again shortly.'
+            : responseBody?.detail ||
+              'We could not submit your enquiry. Please check your details and try again.'
+        );
+      }
+
+      // Successful submission.
+      setDone(true);
+      setFieldErrors({});
+      setSubmitError('');
+      form.reset();
+
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        setSubmitError(
+          'The request took too long (15 seconds). We could not confirm your submission. Please check your connection and try again.'
+        );
+      } else if (error instanceof TypeError) {
+        setSubmitError(
+          'Unable to connect to the server. Check your internet connection and try again.'
+        );
+      } else {
+        setSubmitError(
+          error.message || 'Something went wrong. Please try again.'
+        );
+      }
+    } finally {
+      window.clearTimeout(timeoutId);
+      submittingRef.current = false;
+      setIsSubmitting(false);
+    }
+  };
+
+  if (done) {
     return (
-      <div className="success">
+      <div className="success" role="status" aria-live="polite">
         <CheckCircle2 size={30} />
-        <h3>Thank you for reaching out.</h3>
+
+        <h3>
+          {career
+            ? 'Thank you for your application.'
+            : 'Thank you for reaching out.'}
+        </h3>
+
         <p>
-          This prototype does not send or store your information. Backend integration will be added
-          later.
+          {career
+            ? 'Your application has been received.'
+            : 'Your enquiry has been submitted successfully. Our team will review it and get back to you.'}
         </p>
-        <button className="btn outline" onClick={() => setDone(false)}>
+
+        <button
+          className="btn outline"
+          onClick={() => setDone(false)}
+        >
           Submit another response
         </button>
       </div>
     );
+  }
+
+  const showFieldError = (name) =>
+    fieldErrors[name] ? (
+      <small
+        className="field-error"
+        id={`${name}-error`}
+        role="alert"
+      >
+        {fieldErrors[name]}
+      </small>
+    ) : null;
+
   return (
     <form
       className="form"
-      onSubmit={(e) => {
-        e.preventDefault();
-        setDone(true);
-      }}
+      onSubmit={handleSubmit}
+      noValidate={!career}
     >
       <div className="formgrid">
+
         <label>
-          Full name
-          <input required placeholder="Your name" />
+          Full name *
+          <input
+            name="name"
+            type="text"
+            required
+            maxLength={150}
+            placeholder="Your name"
+            autoComplete="name"
+            onBlur={career ? undefined : handleFieldBlur}
+            aria-invalid={Boolean(fieldErrors.name)}
+            aria-describedby={
+              fieldErrors.name ? 'name-error' : undefined
+            }
+          />
+          {showFieldError('name')}
         </label>
+
         <label>
-          Email address
-          <input type="email" required placeholder="you@company.com" />
+          {career ? 'Email address *' : 'Mobile number *'}
+
+          {career ? (
+            <input
+              name="email"
+              type="email"
+              required
+              maxLength={254}
+              placeholder="you@company.com"
+            />
+          ) : (
+            <>
+              <input
+                name="phone"
+                type="tel"
+                required
+                maxLength={30}
+                placeholder="+91"
+                autoComplete="tel"
+                onBlur={handleFieldBlur}
+                aria-invalid={Boolean(fieldErrors.phone)}
+                aria-describedby={
+                  fieldErrors.phone ? 'phone-error' : undefined
+                }
+              />
+              {showFieldError('phone')}
+            </>
+          )}
         </label>
-        <label>
-          Phone number
-          <input type="tel" placeholder="+91" />
-        </label>
+
+        {career ? (
+          <label>
+            Phone number
+            <input
+              name="phone"
+              type="tel"
+              maxLength={30}
+              placeholder="+91"
+            />
+          </label>
+        ) : (
+          <label className="full">
+            Email address *
+            <input
+              name="email"
+              type="email"
+              required
+              maxLength={254}
+              placeholder="you@company.com"
+              autoComplete="email"
+              onBlur={handleFieldBlur}
+              aria-invalid={Boolean(fieldErrors.email)}
+              aria-describedby={
+                fieldErrors.email ? 'email-error' : undefined
+              }
+            />
+            {showFieldError('email')}
+          </label>
+        )}
+
         {career ? (
           <label>
             Role of interest
-            <select required defaultValue="">
-              <option value="" disabled>
-                Select a role
-              </option>
+            <select name="position" required defaultValue="">
+              <option value="" disabled>Select a role</option>
               <option>Company Secretary</option>
               <option>Associate</option>
               <option>Internship</option>
@@ -803,45 +1120,143 @@ function ContactForm({ career = false }) {
             </select>
           </label>
         ) : (
-          <label>
-            Area of enquiry
-            <select required defaultValue="">
-              <option value="" disabled>
-                Select a service
-              </option>
-              {services.map((s) => (
-                <option key={s.slug}>{s.title}</option>
-              ))}
-              <option>Other</option>
-            </select>
-          </label>
+          <>
+            <label>
+              Organization
+              <input
+                name="organization"
+                type="text"
+                maxLength={200}
+                placeholder="Company name"
+              />
+            </label>
+
+            <label>
+              Designation
+              <input
+                name="designation"
+                type="text"
+                maxLength={150}
+                placeholder="Your designation"
+              />
+            </label>
+
+            <label className="full">
+              City
+              <input
+                name="city"
+                type="text"
+                maxLength={100}
+                placeholder="Your city"
+              />
+            </label>
+
+            <label className="full">
+              Area of enquiry *
+              <select
+                name="subject"
+                required
+                defaultValue=""
+                onBlur={handleFieldBlur}
+                aria-invalid={Boolean(fieldErrors.subject)}
+                aria-describedby={
+                  fieldErrors.subject ? 'subject-error' : undefined
+                }
+              >
+                <option value="" disabled>Select a service</option>
+                {services.map((s) => (
+                  <option key={s.slug}>{s.title}</option>
+                ))}
+                <option>Other</option>
+              </select>
+              {showFieldError('subject')}
+            </label>
+          </>
         )}
+
         {career && (
           <label className="full">
             Resume (prototype only)
-            <input type="file" accept=".pdf,.doc,.docx" />
+            <input
+              name="resume"
+              type="file"
+              accept=".pdf,.doc,.docx"
+            />
           </label>
         )}
+
         <label className="full">
-          How can we help?
+          How can we help? *
           <textarea
+            name="message"
             required
+            maxLength={5000}
             rows="4"
             placeholder={
               career
                 ? 'Tell us about yourself and your experience…'
                 : 'Briefly describe your query…'
             }
+            onBlur={career ? undefined : handleFieldBlur}
+            aria-invalid={Boolean(fieldErrors.message)}
+            aria-describedby={
+              fieldErrors.message ? 'message-error' : undefined
+            }
           />
+          {showFieldError('message')}
         </label>
+
+        {!career && (
+          <label className="full consent-label">
+            <span>
+              <input
+                name="professional_updates"
+                type="checkbox"
+              />
+              I agree to receive professional updates from S. Sandeep & Associates.
+            </span>
+          </label>
+        )}
+
       </div>
-      <button className="btn primary" type="submit">
-        {career ? 'Submit application' : 'Send enquiry'} <Send size={16} />
+
+      {submitError && (
+        <div
+          className="form-alert"
+          role="alert"
+          aria-live="assertive"
+        >
+          {submitError}
+        </div>
+      )}
+
+      <button
+        className="btn primary"
+        type="submit"
+        disabled={isSubmitting}
+      >
+        {isSubmitting
+          ? (career ? 'Submitting…' : 'Sending enquiry…')
+          : (career ? 'Submit application' : 'Send enquiry')}
+
+        {!isSubmitting && <Send size={16} />}
       </button>
-      <small className="formnote">Prototype only — no information is transmitted or saved.</small>
+
+      {!career && (
+        <small className="formnote">
+          Your information will be used to respond to your enquiry.
+        </small>
+      )}
+
+      {career && (
+        <small className="formnote">
+          Prototype only — career application submission will be connected separately.
+        </small>
+      )}
     </form>
   );
 }
+
 function Contact() {
   return (
     <>
