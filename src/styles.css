@@ -2171,3 +2171,33 @@ td button {
   cursor: not-allowed;
   transform: none;
 }
+
+/* Career application resume attachment */
+.career-file {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.career-file span {
+  flex: 1;
+  min-width: 0;
+}
+
+.career-file button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px;
+}

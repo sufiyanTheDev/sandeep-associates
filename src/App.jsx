@@ -27,6 +27,8 @@ import {
 import { services, mockArticles } from './data.js';
 import AdminWorkspace from './components/AdminWorkspace.jsx';
 import AdminLoginPage from './components/AdminLoginPage.jsx';
+import CareerApplicationForm from './components/CareerApplicationForm.jsx';
+
 function Brand({ light = false }) {
   return (
     <Link className={'brand ' + (light ? 'light' : '')} to="/">
@@ -71,7 +73,7 @@ function Header() {
               {t}
             </NavLink>
           ))}
-          <Link className="admin-link" to="/admin/login">
+          <Link className="admin-link" to="/admin/dashboard">
             Admin <ArrowUpRight size={14} />
           </Link>
         </nav>
@@ -1370,7 +1372,7 @@ function Apply() {
           <Link className="textlink" to="/careers">
             ← Back to careers
           </Link>
-          <ContactForm career />
+          <CareerApplicationForm />
         </div>
       </section>
     </>

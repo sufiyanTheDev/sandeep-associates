@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, LockKeyhole, ShieldCheck } from 'lucide-react';
 import { adminApi } from './admin-api.js';
@@ -10,6 +10,31 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
+
+
+  useEffect(() => {
+  let active = true;
+
+  adminApi('/api/v1/admin/me')
+    .then(() => {
+      if (active) {
+        navigate('/admin/dashboard', { replace: true });
+      }
+    })
+    .catch(() => {
+      // No valid session. Show the login form.
+    })
+    .finally(() => {
+      if (active) {
+        setIsCheckingSession(false);
+      }
+    });
+
+  return () => {
+    active = false;
+  };
+}, [navigate]);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -34,7 +59,14 @@ export default function AdminLoginPage() {
       setIsSubmitting(false);
     }
   }
-
+  if (isCheckingSession) {
+    return (
+      <div className="aw-loading-screen">
+        <span className="aw-loading-spinner" />
+        Verifying administrator session…
+      </div>
+    );
+  }
   return (
     <main className="adminlogin">
       <div className="admin-top">
