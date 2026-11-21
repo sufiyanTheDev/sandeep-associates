@@ -122,3 +122,36 @@
 .aw-loading-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; gap: 12px; color: #6f8190; background: #f8f7f3; font-size: 13px; }
 .aw-loading-spinner { width: 18px; height: 18px; border: 2px solid #e5e8e9; border-top-color: #a27d43; border-radius: 50%; animation: aw-spin .8s linear infinite; }
 @keyframes aw-spin { to { transform: rotate(360deg); } }
+
+/* Career application management */
+.aw-app-total { padding: 7px 10px; border: 1px solid #eee7da; border-radius: 4px; background: #fbf8f2; color: #927044; font-size: 9px; font-weight: 700; white-space: nowrap; }
+.aw-career-table { min-width: 790px; }
+.aw-career-status-received { background: #f8f0df; color: #96713b; }
+.aw-career-status-reviewing { background: #edf2f7; color: #4c6b83; }
+.aw-career-status-shortlisted { background: #edf4ed; color: #567b5c; }
+.aw-career-status-interview { background: #f1edfa; color: #75609a; }
+.aw-career-status-selected { background: #e8f3ec; color: #39734c; }
+.aw-career-status-rejected { background: #f8eceb; color: #a45b54; }
+.aw-career-modal { width: min(720px, 100%); }
+.aw-career-section-title { margin: 22px 0 0; color: #a27d43; font-size: 8px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; }
+.aw-career-link a { display: inline-flex; align-items: center; gap: 5px; color: #98713b; font-size: 10px; font-weight: 600; text-decoration: none; }
+.aw-career-link a:hover { color: var(--navy, #123653); }
+.aw-resume-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 18px; padding: 13px; border: 1px solid #e9edf0; border-radius: 5px; background: #fff; }
+.aw-resume-info { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.aw-resume-info > span:last-child { display: grid; gap: 4px; min-width: 0; }
+.aw-resume-info b { overflow-wrap: anywhere; color: var(--navy, #123653); font-size: 10px; }
+.aw-resume-info small { color: #8c99a3; font-size: 9px; }
+.aw-resume-icon { width: 34px; height: 34px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 4px; background: #f7f2e9; color: #a27d43; }
+.aw-button-gold { display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 1px solid #b28c51; background: #b28c51; color: #fff; white-space: nowrap; }
+.aw-button-gold:hover { background: #98713b; }
+.aw-button:disabled { opacity: .55; cursor: wait; }
+.aw-audit-list { display: grid; gap: 0; margin: 13px 0 0; padding: 0; list-style: none; }
+.aw-audit-list li { position: relative; display: flex; gap: 11px; padding: 0 0 15px; }
+.aw-audit-list li:not(:last-child)::before { position: absolute; top: 9px; bottom: -1px; left: 4px; width: 1px; background: #e7e9e9; content: ''; }
+.aw-audit-dot { z-index: 1; width: 9px; height: 9px; flex: 0 0 auto; margin-top: 3px; border: 2px solid #b28c51; border-radius: 50%; background: #fff; }
+.aw-audit-list li > div { display: grid; gap: 4px; }
+.aw-audit-list b { color: #29445b; font-size: 10px; }
+.aw-audit-list p { margin: 0; color: #6e8090; font-size: 10px; }
+.aw-audit-list small, .aw-audit-empty { color: #98a4ad; font-size: 9px; }
+.aw-audit-empty { margin: 12px 0 0; }
+@media (max-width: 560px) { .aw-resume-row { align-items: stretch; flex-direction: column; } .aw-button-gold { width: 100%; } .aw-career-modal .aw-detail-header { gap: 10px; } }

@@ -10,6 +10,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock3,
+  Download,
+  FileText,
+  ExternalLink,
   LayoutDashboard,
   LogOut,
   Mail,
@@ -34,6 +37,16 @@ const statusLabels = {
 };
 
 const statusOptions = Object.entries(statusLabels);
+
+const careerStatusLabels = {
+  RECEIVED: 'Received',
+  REVIEWING: 'Reviewing',
+  SHORTLISTED: 'Shortlisted',
+  INTERVIEW: 'Interview',
+  SELECTED: 'Selected',
+  REJECTED: 'Rejected',
+};
+const careerStatusOptions = Object.entries(careerStatusLabels);
 
 function formatDate(value) {
   if (!value) return '—';
@@ -119,6 +132,54 @@ function QueryDetail({ query, onClose, onStatusChange, isUpdating, error }) {
   );
 }
 
+function CareerApplicationDetail({ application, onClose, onStatusChange, onDownload, isUpdating, isDownloading, error }) {
+  if (!application) return null;
+  const experience = `${application.experience_years} year${application.experience_years === 1 ? '' : 's'}${application.experience_months ? `, ${application.experience_months} month${application.experience_months === 1 ? '' : 's'}` : ''}`;
+  const formatBytes = (bytes) => `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+
+  return (
+    <div className="aw-modal-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+      <section className="aw-detail-modal aw-career-modal" role="dialog" aria-modal="true" aria-labelledby="aw-career-detail-title">
+        <header className="aw-detail-header">
+          <div>
+            <span className="aw-eyebrow">CAREER APPLICATION · {application.id}</span>
+            <h2 id="aw-career-detail-title">{application.name}</h2>
+            <p>Received on {formatDate(application.created_at)} at {formatTime(application.created_at)}</p>
+          </div>
+          <button className="aw-icon-button" onClick={onClose} aria-label="Close details"><X size={19} /></button>
+        </header>
+        <div className="aw-detail-body">
+          <div className="aw-detail-status">
+            <span>Application status</span>
+            <select value={application.status} disabled={isUpdating} onChange={(event) => onStatusChange(application.id, event.target.value)} aria-label="Update application status">
+              {careerStatusOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+            </select>
+          </div>
+          {error && <div className="aw-form-alert" role="alert">{error}</div>}
+          <div className="aw-career-section-title">Applicant information</div>
+          <div className="aw-detail-grid">
+            <div><span><Mail size={14} /> Email</span><b>{application.email || '—'}</b></div>
+            <div><span><Phone size={14} /> Mobile</span><b>{application.phone || '—'}</b></div>
+            <div><span><BriefcaseBusiness size={14} /> Position</span><b>{application.position || 'Not specified'}</b></div>
+            <div><span><FileText size={14} /> Qualification</span><b>{application.qualification || '—'}</b></div>
+            <div><span><Clock3 size={14} /> Experience</span><b>{experience}</b></div>
+            <div><span><Users size={14} /> Current / last company</span><b>{application.current_company || '—'}</b></div>
+            <div className="aw-career-link"><span><ExternalLink size={14} /> LinkedIn</span>{application.linkedin_url ? <a href={application.linkedin_url} target="_blank" rel="noreferrer">View profile <ExternalLink size={12} /></a> : <b>—</b>}</div>
+          </div>
+          <div className="aw-detail-message"><span>Additional message</span><p>{application.message || 'No additional message provided.'}</p></div>
+          <div className="aw-resume-row">
+            <div className="aw-resume-info"><span className="aw-resume-icon"><FileText size={18} /></span><span><b>{application.resume_original_filename}</b><small>PDF document · {formatBytes(application.resume_size_bytes)}</small></span></div>
+            <button className="aw-button aw-button-gold" type="button" onClick={() => onDownload(application.id)} disabled={isDownloading}><Download size={14} /> {isDownloading ? 'Downloading…' : 'Download resume'}</button>
+          </div>
+          <div className="aw-career-section-title">Status history</div>
+          {application.audit_history?.length ? <ol className="aw-audit-list">{application.audit_history.map((entry) => <li key={entry.id}><span className="aw-audit-dot" /><div><b>{entry.action === 'STATUS_CHANGED' ? 'Status changed' : entry.action}</b><p>{entry.previous_value?.status ? `${careerStatusLabels[entry.previous_value.status] || entry.previous_value.status} → ` : ''}{careerStatusLabels[entry.new_value?.status] || entry.new_value?.status || 'Updated'}</p><small>{formatDate(entry.created_at)} · {formatTime(entry.created_at)}</small></div></li>)}</ol> : <p className="aw-audit-empty">No status changes recorded yet.</p>}
+        </div>
+        <footer className="aw-detail-footer"><span><ShieldCheck size={15} /> Confidential applicant record</span><button className="aw-button aw-button-outline" onClick={onClose}>Close</button></footer>
+      </section>
+    </div>
+  );
+}
+
 export default function AdminWorkspace() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -130,11 +191,21 @@ export default function AdminWorkspace() {
   const [authLoading, setAuthLoading] = useState(true);
   const [summary, setSummary] = useState(null);
   const [queries, setQueries] = useState([]);
+  const [applications, setApplications] = useState([]);
+  const [applicationTotal, setApplicationTotal] = useState(0);
+  const [applicationTotalPages, setApplicationTotalPages] = useState(0);
+  const [selectedApplication, setSelectedApplication] = useState(null);
+  const [isApplicationLoading, setIsApplicationLoading] = useState(false);
+  const [isCareerUpdating, setIsCareerUpdating] = useState(false);
+  const [isResumeDownloading, setIsResumeDownloading] = useState(false);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [page, setPage] = useState(1);
+  const [careerSearch, setCareerSearch] = useState('');
+  const [careerStatusFilter, setCareerStatusFilter] = useState('ALL');
+  const [careerPage, setCareerPage] = useState(1);
   const [selected, setSelected] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -190,6 +261,64 @@ export default function AdminWorkspace() {
     }
   }, [page, pageSize, search, statusFilter, handleUnauthorized]);
 
+  const loadApplications = useCallback(async () => {
+    setIsApplicationLoading(true);
+    setPageError('');
+    const params = new URLSearchParams({ page: String(careerPage), page_size: '20' });
+    if (careerSearch.trim()) params.set('search', careerSearch.trim());
+    if (careerStatusFilter !== 'ALL') params.set('status', careerStatusFilter);
+    try {
+      const data = await adminApi(`/api/v1/admin/career-applications?${params.toString()}`);
+      setApplications(data.items || []);
+      setApplicationTotal(data.total || 0);
+      setApplicationTotalPages(data.total_pages || 0);
+    } catch (error) {
+      if (!handleUnauthorized(error)) setPageError(error.message || 'Unable to load career applications.');
+    } finally {
+      setIsApplicationLoading(false);
+    }
+  }, [careerPage, careerSearch, careerStatusFilter, handleUnauthorized]);
+
+  const openApplicationDetails = async (id) => {
+    setDetailError('');
+    try {
+      const data = await adminApi(`/api/v1/admin/career-applications/${id}`);
+      setSelectedApplication(data);
+    } catch (error) {
+      if (!handleUnauthorized(error)) setPageError(error.message || 'Unable to load application details.');
+    }
+  };
+
+  const updateCareerStatus = async (id, status) => {
+    setIsCareerUpdating(true);
+    setDetailError('');
+    try {
+      const data = await adminApi(`/api/v1/admin/career-applications/${id}/status`, {
+        method: 'PATCH', body: JSON.stringify({ status }),
+      });
+      const refreshed = await adminApi(`/api/v1/admin/career-applications/${id}`);
+      setSelectedApplication(refreshed);
+      setApplications((current) => current.map((item) => item.id === id ? { ...item, status: data.status, updated_at: data.updated_at } : item));
+      await loadApplications();
+    } catch (error) {
+      if (!handleUnauthorized(error)) setDetailError(error.message || 'Unable to update application status.');
+    } finally {
+      setIsCareerUpdating(false);
+    }
+  };
+
+  const downloadResume = async (id) => {
+    setIsResumeDownloading(true);
+    setDetailError('');
+    try {
+      await adminApi.download(`/api/v1/admin/career-applications/${id}/resume`);
+    } catch (error) {
+      if (!handleUnauthorized(error)) setDetailError(error.message || 'Unable to download resume.');
+    } finally {
+      setIsResumeDownloading(false);
+    }
+  };
+
   useEffect(() => {
     if (!admin) return;
     loadSummary();
@@ -200,6 +329,12 @@ export default function AdminWorkspace() {
     const timer = window.setTimeout(loadQueries, 300);
     return () => window.clearTimeout(timer);
   }, [admin, loadQueries]);
+
+  useEffect(() => {
+    if (!admin || !isApplications) return;
+    const timer = window.setTimeout(loadApplications, 300);
+    return () => window.clearTimeout(timer);
+  }, [admin, isApplications, loadApplications]);
 
   const openDetails = async (id) => {
     setDetailError('');
@@ -278,7 +413,25 @@ export default function AdminWorkspace() {
           </section>}
 
           {isApplications ? (
-            <section className="aw-empty-panel"><span className="aw-empty-icon"><BriefcaseBusiness size={23} /></span><h2>Career applications</h2><p>Career application management will be connected in the next stage.</p></section>
+            <section className="aw-panel">
+              <div className="aw-panel-heading"><div><span className="aw-eyebrow">TALENT INBOX</span><h2>All applications</h2><p>Review candidate profiles, resumes and application progress.</p></div><span className="aw-app-total">{applicationTotal} total</span></div>
+              <div className="aw-toolbar">
+                <label className="aw-search"><Search size={16} /><input value={careerSearch} onChange={(event) => { setCareerSearch(event.target.value); setCareerPage(1); }} placeholder="Search name, email or application ID" /></label>
+                <label className="aw-filter"><span>Status</span><select value={careerStatusFilter} onChange={(event) => { setCareerStatusFilter(event.target.value); setCareerPage(1); }}><option value="ALL">All statuses</option>{careerStatusOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><ChevronDown size={14} /></label>
+              </div>
+              {pageError && <div className="aw-form-alert" role="alert">{pageError}</div>}
+              <div className="aw-table-wrap"><table className="aw-table aw-career-table"><thead><tr><th>Applicant</th><th>Position</th><th>Experience</th><th>Received</th><th>Status</th><th><span className="aw-sr-only">Action</span></th></tr></thead><tbody>
+                {isApplicationLoading ? <tr><td colSpan="6" className="aw-no-results">Loading applications…</td></tr> : applications.length ? applications.map((item) => <tr key={item.id}>
+                  <td><div className="aw-person"><span className="aw-person-avatar">{initials(item.name)}</span><span><b>{item.name}</b><small>{item.email}</small></span></div></td>
+                  <td><span className="aw-subject">{item.position || 'Not specified'}</span><small className="aw-org">{item.qualification}</small></td>
+                  <td>{item.experience_years}y {item.experience_months}m</td>
+                  <td><span className="aw-date">{formatDate(item.created_at)}</span><small className="aw-org">{formatTime(item.created_at)}</small></td>
+                  <td><span className={`aw-status aw-career-status-${String(item.status).toLowerCase()}`}>{careerStatusLabels[item.status] || item.status}</span></td>
+                  <td><button className="aw-view-button" onClick={() => openApplicationDetails(item.id)}>Review <ArrowUpRight size={14} /></button></td>
+                </tr>) : <tr><td colSpan="6" className="aw-no-results">{pageError ? 'Unable to load applications.' : 'No applications match your search.'}</td></tr>}
+              </tbody></table></div>
+              <div className="aw-table-footer"><span>Showing {applicationTotal ? (careerPage - 1) * 20 + 1 : 0}–{Math.min(careerPage * 20, applicationTotal)} of {applicationTotal} applications</span><div className="aw-pagination"><button disabled={careerPage <= 1 || isApplicationLoading} onClick={() => setCareerPage((value) => Math.max(1, value - 1))} aria-label="Previous page"><ChevronLeft size={16} /></button><span>{careerPage} / {Math.max(applicationTotalPages, 1)}</span><button disabled={careerPage >= applicationTotalPages || isApplicationLoading || applicationTotalPages === 0} onClick={() => setCareerPage((value) => Math.min(applicationTotalPages, value + 1))} aria-label="Next page"><ChevronRight size={16} /></button></div></div>
+            </section>
           ) : (
             <section className="aw-panel">
               <div className="aw-panel-heading"><div><span className="aw-eyebrow">INBOX</span><h2>{isQueries ? 'All enquiries' : 'Recent enquiries'}</h2><p>{isQueries ? 'Search, filter and review client submissions.' : 'The latest submissions requiring your attention.'}</p></div>{!isQueries && <Link className="aw-text-link" to="/admin/queries">View all enquiries <ArrowUpRight size={15} /></Link>}</div>
@@ -303,6 +456,7 @@ export default function AdminWorkspace() {
         </div>
       </main>
       <QueryDetail query={selected} onClose={() => setSelected(null)} onStatusChange={updateStatus} isUpdating={isUpdating} error={detailError} />
+      <CareerApplicationDetail application={selectedApplication} onClose={() => setSelectedApplication(null)} onStatusChange={updateCareerStatus} onDownload={downloadResume} isUpdating={isCareerUpdating} isDownloading={isResumeDownloading} error={detailError} />
     </div>
   );
 }

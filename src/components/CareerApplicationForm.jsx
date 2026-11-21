@@ -1,6 +1,7 @@
 
 import { useRef, useState } from 'react';
 import { Send, FileText, X } from 'lucide-react';
+import { API_BASE_URL } from './admin-api';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
@@ -17,12 +18,34 @@ const initialValues = {
   message: '',
 };
 
+function getErrorMessage(data, status) {
+  const detail = data?.detail;
+
+  if (typeof detail === 'string') return detail;
+
+  if (Array.isArray(detail)) {
+    return detail
+      .map((item) => item.msg || 'Please check your entries.')
+      .join(' ');
+  }
+
+  if (status === 413) {
+    return 'Your resume is too large. Please upload a PDF of 5 MB or less.';
+  }
+
+  return 'We could not submit your application. Please try again.';
+}
+
 export default function CareerApplicationForm() {
   const [values, setValues] = useState(initialValues);
   const [resume, setResume] = useState(null);
   const [resumeError, setResumeError] = useState('');
   const [notice, setNotice] = useState('');
+  const [noticeType, setNoticeType] = useState('error');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const fileInputRef = useRef(null);
+  const submittingRef = useRef(false);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -70,19 +93,83 @@ export default function CareerApplicationForm() {
     }
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (submittingRef.current) return;
+
     setNotice('');
+    setResumeError('');
 
     if (!resume) {
       setResumeError('Please attach your resume in PDF format.');
       return;
     }
 
-    // API integration will be implemented in the next phase.
-    setNotice(
-      'The application form is ready, but submission is not enabled yet. Your details have not been sent or stored.'
+    const formData = new FormData();
+
+    Object.entries(values).forEach(([key, value]) => {
+      formData.append(key, value.trim());
+    });
+
+    formData.set(
+      'experience_years',
+      String(Number(values.experience_years))
     );
+
+    formData.set(
+      'experience_months',
+      String(Number(values.experience_months))
+    );
+
+    formData.append('resume', resume, resume.name);
+
+    submittingRef.current = true;
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/v1/career-applications`,
+        {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+          },
+          body: formData,
+        }
+      );
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(getErrorMessage(data, response.status));
+      }
+
+      setValues(initialValues);
+      setResume(null);
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+
+      setNotice(
+        data?.message ||
+        'Your application has been submitted successfully.'
+      );
+
+      setNoticeType('success');
+    } catch (error) {
+      setNotice(
+        error instanceof TypeError
+          ? 'We could not connect to the application service. Please try again in a moment.'
+          : error.message || 'We could not submit your application. Please try again.'
+      );
+
+      setNoticeType('error');
+    } finally {
+      submittingRef.current = false;
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -123,7 +210,7 @@ export default function CareerApplicationForm() {
             name="phone"
             value={values.phone}
             onChange={handleChange}
-            maxLength={20}
+            maxLength={30}
             placeholder="Enter mobile number"
             autoComplete="tel"
             required
@@ -223,6 +310,7 @@ export default function CareerApplicationForm() {
 
         <label className="full">
           Resume (PDF only, maximum 5 MB) *
+
           <input
             ref={fileInputRef}
             type="file"
@@ -236,6 +324,7 @@ export default function CareerApplicationForm() {
             <span className="career-file">
               <FileText size={16} />
               <span>{resume.name}</span>
+
               <button
                 type="button"
                 onClick={removeResume}
@@ -253,19 +342,34 @@ export default function CareerApplicationForm() {
           )}
 
           <small className="formnote">
-            Upload your latest resume in PDF format. Maximum file size: 5 MB.
+            Upload your latest resume in PDF format.
+            Maximum file size: 5 MB.
           </small>
         </label>
       </div>
 
       {notice && (
-        <div className="form-alert" role="status" aria-live="polite">
+        <div
+          className={`form-alert ${
+            noticeType === 'success' ? 'form-alert-success' : ''
+          }`}
+          role={noticeType === 'success' ? 'status' : 'alert'}
+          aria-live="polite"
+        >
           {notice}
         </div>
       )}
 
-      <button className="btn primary" type="submit">
-        Submit application <Send size={16} />
+      <button
+        className="btn primary"
+        type="submit"
+        disabled={isSubmitting}
+      >
+        {isSubmitting
+          ? 'Submitting application…'
+          : 'Submit application'}
+
+        <Send size={16} />
       </button>
 
       <small className="formnote">

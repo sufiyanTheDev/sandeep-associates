@@ -38,4 +38,34 @@ export async function adminApi(path, options = {}) {
   return data;
 }
 
+export async function downloadAdminFile(path) {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: 'GET',
+    credentials: 'include',
+    headers: { Accept: 'application/pdf' },
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    const detail = data?.detail;
+    const message = typeof detail === 'string' ? detail : `Request failed (${response.status})`;
+    throw new ApiError(message, response.status, detail);
+  }
+
+  const blob = await response.blob();
+  const disposition = response.headers.get('Content-Disposition') || '';
+  const filenameMatch = disposition.match(/filename="?([^";]+)"?/i);
+  const filename = filenameMatch?.[1] || 'resume.pdf';
+  const objectUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = objectUrl;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+}
+
+adminApi.download = downloadAdminFile;
+
 export { API_BASE_URL };
